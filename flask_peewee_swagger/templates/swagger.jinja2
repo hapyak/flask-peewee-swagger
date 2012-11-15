@@ -1,17 +1,17 @@
 <html>
 <head>
-    <title>hapyak api docs</title>
+    <title>{{ title }}</title>
     <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'/>
-    <link href='/static/vendor/swagger-ui-1.1.0/css/screen.css' media='screen' rel='stylesheet' type='text/css'/>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.min.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.slideto.min.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.wiggle.min.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.ba-bbq.min.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/handlebars.runtime-1.0.0.beta.6.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/underscore-min.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/backbone-min.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/lib/swagger.js' type='text/javascript'></script>
-    <script src='/static/vendor/swagger-ui-1.1.0/swagger-ui.js' type='text/javascript'></script>
+    <link href='{{ static_dir }}/swagger-ui-1.1.0/css/screen.css' media='screen' rel='stylesheet' type='text/css'/>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/jquery.min.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/jquery.slideto.min.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/jquery.wiggle.min.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/jquery.ba-bbq.min.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/handlebars.runtime-1.0.0.beta.6.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/underscore-min.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/backbone-min.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/lib/swagger.js' type='text/javascript'></script>
+    <script src='{{ static_dir }}/swagger-ui-1.1.0/swagger-ui.js' type='text/javascript'></script>
 
     <style type="text/css">
         .swagger-ui-wrap {
@@ -57,7 +57,7 @@
 <body>
 <div id='header'>
     <div class="swagger-ui-wrap">
-        <a id="logo" href="http://swagger.wordnik.com">hapyak api documentation</a>
+        <a id="logo" href="http://swagger.wordnik.com">{{ title }}</a>
     </div>
 </div>
 
@@ -70,5 +70,4 @@
 </div>
 
 </body>
-
 </html>
