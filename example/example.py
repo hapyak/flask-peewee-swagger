@@ -1,17 +1,22 @@
+from __future__ import absolute_import
+
 from flask import Flask
-from flask.ext.peewee.rest import RestAPI, RestResource
-from peewee import Model
 import peewee
-from flask.ext.peewee_swagger.swagger import Swagger, SwaggerUI
+from flask_peewee.rest import RestAPI, RestResource
+from flask_peewee_swagger.swagger import Swagger, SwaggerUI
+
+######################################
+# standard flask peewee setup
+######################################
 
 app = Flask(__name__)
 
-class Blog(Model):
+class Blog(peewee.Model):
     title = peewee.CharField()
     created = peewee.DateTimeField()
     modified = peewee.DateTimeField()
 
-class Post(Model):
+class Post(peewee.Model):
     blog = peewee.ForeignKeyField(Blog, related_name='posts')
     title = peewee.CharField()
 
@@ -27,6 +32,10 @@ api.register(Blog, BlogResource)
 api.register(Post, PostResource)
 
 api.setup()
+
+######################################
+# create the swagger api end point
+######################################
 
 swagger = Swagger(api)
 swagger.setup()

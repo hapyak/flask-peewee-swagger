@@ -24,7 +24,6 @@ Two base routes will be added to your flask application to support swagger docum
 
 	app = Flask(__name__)
 	
-	
 	class Blog(Model):
 	    title = peewee.CharField()
 	    created = peewee.DateTimeField()

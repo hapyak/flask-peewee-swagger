@@ -15,6 +15,9 @@ setup(
     description='Swagger Documentation for flask-peewee apis',
     packages=find_packages(),
     package_data = {
+        'example': [
+            'requirements.txt'
+        ],
         'flask_peewee_swagger': [
             'static/swagger-ui-1.1.0/css/*.css',
             'static/swagger-ui-1.1.0/images/*.png',

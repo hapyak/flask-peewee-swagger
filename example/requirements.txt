@@ -1,0 +1,7 @@
+flask
+flask-peewee
+werkzeug
+jinja2
+peewee
+wtforms
+wtf-peewee
