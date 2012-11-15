@@ -149,7 +149,7 @@ class Swagger(object):
         params.append({
             'paramType': 'query',
             'name': 'limit',
-            'description': 'The number of items to return (defaults to 10)',
+            'description': 'The number of items to return (defaults to %s)' % resource.paginate_by,
             'dataType': 'int',
             'required': False,
             'allowMultiple': False,
