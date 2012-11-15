@@ -50,12 +50,14 @@ class Swagger(object):
         self.blueprint = Blueprint(name, __name__)
 
     def setup(self):
+        self.configure_routes()
+        self.app.register_blueprint(self.blueprint, url_prefix='%s/meta' % self.api.url_prefix)
+
+    def configure_routes(self):
         self.blueprint.add_url_rule('/resources',
             'model_resources', self.model_resources)
         self.blueprint.add_url_rule('/resources/<resource_name>',
             'model_resource', self.model_resource)
-
-        self.app.register_blueprint(self.blueprint, url_prefix='%s/meta' % self.api.url_prefix)
 
     def base_uri(self):
         base_uri = request.host_url
