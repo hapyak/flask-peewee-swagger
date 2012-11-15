@@ -38,6 +38,7 @@ class SwaggerUI(object):
             title=self.title,
         )
 
+
 class Swagger(object):
     """ Adds a flask blueprint for the swagger meta json resources. """
 
@@ -51,7 +52,8 @@ class Swagger(object):
 
     def setup(self):
         self.configure_routes()
-        self.app.register_blueprint(self.blueprint, url_prefix='%s/meta' % self.api.url_prefix)
+        self.app.register_blueprint(self.blueprint,
+            url_prefix='%s/meta' % self.api.url_prefix)
 
     def configure_routes(self):
         self.blueprint.add_url_rule('/resources',
@@ -81,7 +83,8 @@ class Swagger(object):
     def get_model_resources(self):
         resources = []
 
-        for type in sorted(self.api._registry.keys(), key=lambda type: type.__name__):
+        for type in sorted(self.api._registry.keys(),
+            key=lambda type: type.__name__):
             resource = self.api._registry.get(type)
             resources.append({
                 'path': '/meta/resources/%s' % resource.get_api_name(),
@@ -114,9 +117,7 @@ class Swagger(object):
         response.headers.add('Cache-Control', 'max-age=0')
         return response
 
-    def add_get_all_api(self, apis, resource):
-        """ Generates the meta descriptor for the resource listing api. """
-
+    def get_default_all_params(self, resource):
         limit_param = {
             'paramType': 'query',
             'name': 'limit',
@@ -124,7 +125,8 @@ class Swagger(object):
             'dataType': 'int',
             'required': False,
             'allowMultiple': False,
-            }
+        }
+
         page_param = {
             'paramType': 'query',
             'name': 'page',
@@ -133,49 +135,54 @@ class Swagger(object):
             'dataType': 'int',
             'required': False,
             'allowMultiple': False,
-            }
+        }
 
-        get_all_params = [
-            limit_param,
-            page_param
-        ]
+        return [limit_param, page_param]
+
+    def add_get_all_api(self, apis, resource):
+        """ Generates the meta descriptor for the resource listing api. """
+
+        get_all_params = self.get_default_all_params(resource)
 
         for field_name in sorted(resource.model._meta.fields.keys()):
             field = resource.model._meta.fields.get(field_name)
-            rules = field.attributes.get('rules')
-            if rules and not rules.api.view:
-                continue
-
-            data_type = 'int'
-            if isinstance(field, peewee.CharField):
-                data_type = 'string'
-            elif isinstance(field, peewee.DateTimeField):
-                data_type = 'Date'
-            elif isinstance(field, peewee.FloatField):
-                data_type = 'float'
-            elif isinstance(field, peewee.BooleanField):
-                data_type = 'boolean'
-
-            parameter = {
-                'paramType': 'query', 'name': field_name,
-                'description': 'Filter by %s' % field_name,
-                'dataType': data_type, 'required': False,
-                'allowMultiple': False,
-                }
-
-            get_all_params.append(parameter)
+            parameter = self.get_parameter(field)
+            if parameter:
+                get_all_params.append(parameter)
 
         get_all_api = {
             'path': '/%s/' % resource.get_api_name(),
             'description': 'Operations on %s' % resource.model.__name__,
-            'operations': [{
-                               'httpMethod': 'GET',
-                               'nickname': 'getAll%ss' % resource.model.__name__,
-                               'summary': 'Find %ss' % resource.model.__name__,
-                               'parameters': get_all_params,
-                               }]
+            'operations': [
+                {
+                    'httpMethod': 'GET',
+                    'nickname': 'getAll%ss' % resource.model
+                    .__name__,
+                    'summary': 'Find %ss' % resource.model.__name__,
+                    'parameters': get_all_params,
+                }
+            ]
         }
+
         apis.append(get_all_api)
+
+    def get_parameter(self, field):
+        data_type = 'int'
+        if isinstance(field, peewee.CharField):
+            data_type = 'string'
+        elif isinstance(field, peewee.DateTimeField):
+            data_type = 'Date'
+        elif isinstance(field, peewee.FloatField):
+            data_type = 'float'
+        elif isinstance(field, peewee.BooleanField):
+            data_type = 'boolean'
+        parameter = {
+            'paramType': 'query', 'name': field.name,
+            'description': 'Filter by %s' % field.name,
+            'dataType': data_type, 'required': False,
+            'allowMultiple': False,
+        }
+        return parameter
 
     def add_get_item_api(self, apis, resource):
         """ Generates the meta descriptor for the resource item api. """
@@ -183,21 +190,26 @@ class Swagger(object):
         get_item_api = {
             'path': '/%s/{id}' % resource.get_api_name(),
             'description': 'Operations on %s' % resource.model.__name__,
-            'operations': [{
-                               'httpMethod': 'GET',
-                               'nickname': 'get%sById' % resource.model.__name__,
-                               'summary': 'Find %s by its unique ID' %
-                                          resource.model.__name__,
-                               'parameters': [{
-                                                  'paramType': 'path',
-                                                  'name': 'id',
-                                                  'description': 'ID of %s '
-                                                                 'that to be fetch' % resource.model.__name__,
-                                                  'dataType': 'int',
-                                                  'required': True,
-                                                  'allowMultiple': False,
-                                                  }],
-                               }]
+            'operations': [
+                {
+                    'httpMethod': 'GET',
+                    'nickname': 'get%sById' % resource.model.__name__,
+                    'summary': 'Find %s by its unique ID' %
+                               resource.model.__name__,
+                    'parameters': [
+                        {
+                            'paramType': 'path',
+                            'name': 'id',
+                            'description': 'ID of %s '
+                                           'that to be fetch' % resource
+                                           .model.__name__,
+                            'dataType': 'int',
+                            'required': True,
+                            'allowMultiple': False,
+                        }
+                    ],
+                }
+            ]
         }
 
         apis.append(get_item_api)
