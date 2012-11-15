@@ -1,0 +1,74 @@
+<html>
+<head>
+    <title>hapyak api docs</title>
+    <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'/>
+    <link href='/static/vendor/swagger-ui-1.1.0/css/screen.css' media='screen' rel='stylesheet' type='text/css'/>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.min.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.slideto.min.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.wiggle.min.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/jquery.ba-bbq.min.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/handlebars.runtime-1.0.0.beta.6.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/underscore-min.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/backbone-min.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/lib/swagger.js' type='text/javascript'></script>
+    <script src='/static/vendor/swagger-ui-1.1.0/swagger-ui.js' type='text/javascript'></script>
+
+    <style type="text/css">
+        .swagger-ui-wrap {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .icon-btn {
+            cursor: pointer;
+        }
+
+        #message-bar {
+            min-height: 30px;
+            text-align: center;
+            padding-top: 10px;
+        }
+
+        .message-success {
+            color: #89BF04;
+        }
+
+        .message-fail {
+            color: #cc0000;
+        }
+    </style>
+
+    <script type="text/javascript">
+        $(function () {
+            window.swaggerUi = new SwaggerUi({
+                discoveryUrl:"/api/meta/resources",
+                dom_id:"swagger-ui-container",
+                supportHeaderParams: true,
+                supportedSubmitMethods: ['get', 'post', 'put']
+            });
+
+            window.swaggerUi.load();
+        });
+
+    </script>
+</head>
+
+<body>
+<div id='header'>
+    <div class="swagger-ui-wrap">
+        <a id="logo" href="http://swagger.wordnik.com">hapyak api documentation</a>
+    </div>
+</div>
+
+<div id="message-bar" class="swagger-ui-wrap">
+    &nbsp;
+</div>
+
+<div id="swagger-ui-container" class="swagger-ui-wrap">
+
+</div>
+
+</body>
+
+</html>
