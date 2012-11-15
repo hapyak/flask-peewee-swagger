@@ -1,7 +1,16 @@
 flask-peewee-swagger
 ====================
 
-Generates [swagger](http://http://swagger.wordnik.com/) documentation for [flask-peewee](https://github.com/coleifer/flask-peewee) projects.
+Generates [swagger](http://http://swagger.wordnik.com/) documentation for
+[flask-peewee](https://github.com/coleifer/flask-peewee) projects.
+
+You can see an example of what swagger ui docs look like here.
+
+http://petstore.swagger.wordnik.com/
+
+And the swagger specification can be found here.
+
+https://github.com/wordnik/swagger-core/wiki
 
 ### Flask Routes
 
