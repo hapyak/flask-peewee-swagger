@@ -110,45 +110,17 @@ class Swagger(object):
             'apis': apis
         }
 
-        self.add_get_all_api(apis, resource)
-        self.add_get_item_api(apis, resource)
+        apis.append(self.get_listing_api(resource))
+        apis.append(self.get_item_api(resource))
 
         response = jsonify(data)
         response.headers.add('Cache-Control', 'max-age=0')
         return response
 
-    def get_default_all_params(self, resource):
-        limit_param = {
-            'paramType': 'query',
-            'name': 'limit',
-            'description': 'The number of items to return (defaults to 10)',
-            'dataType': 'int',
-            'required': False,
-            'allowMultiple': False,
-        }
-
-        page_param = {
-            'paramType': 'query',
-            'name': 'page',
-            'description': 'The page number of the results to return. Used '
-                           'with limit.',
-            'dataType': 'int',
-            'required': False,
-            'allowMultiple': False,
-        }
-
-        return [limit_param, page_param]
-
-    def add_get_all_api(self, apis, resource):
+    def get_listing_api(self, resource):
         """ Generates the meta descriptor for the resource listing api. """
 
-        get_all_params = self.get_default_all_params(resource)
-
-        for field_name in sorted(resource.model._meta.fields.keys()):
-            field = resource.model._meta.fields.get(field_name)
-            parameter = self.get_parameter(field)
-            if parameter:
-                get_all_params.append(parameter)
+        get_all_params = self.get_listing_parameters(resource)
 
         get_all_api = {
             'path': '/%s/' % resource.get_api_name(),
@@ -164,9 +136,40 @@ class Swagger(object):
             ]
         }
 
-        apis.append(get_all_api)
+        return get_all_api
 
-    def get_parameter(self, field):
+    def get_listing_parameters(self, resource):
+        params = []
+
+        for field_name in sorted(resource.model._meta.fields.keys()):
+            field = resource.model._meta.fields.get(field_name)
+            parameter = self.get_model_field_parameter(field)
+            if parameter:
+                params.append(parameter)
+
+
+        params.append({
+            'paramType': 'query',
+            'name': 'limit',
+            'description': 'The number of items to return (defaults to 10)',
+            'dataType': 'int',
+            'required': False,
+            'allowMultiple': False,
+        })
+
+        params.append({
+            'paramType': 'query',
+            'name': 'page',
+            'description': 'The page number of the results to return. Used '
+                           'with limit.',
+            'dataType': 'int',
+            'required': False,
+            'allowMultiple': False,
+        })
+
+        return params
+
+    def get_model_field_parameter(self, field):
         data_type = 'int'
         if isinstance(field, peewee.CharField):
             data_type = 'string'
@@ -184,8 +187,10 @@ class Swagger(object):
         }
         return parameter
 
-    def add_get_item_api(self, apis, resource):
+    def get_item_api(self, resource):
         """ Generates the meta descriptor for the resource item api. """
+
+        parameters = self.get_item_parameters(resource)
 
         get_item_api = {
             'path': '/%s/{id}' % resource.get_api_name(),
@@ -196,20 +201,19 @@ class Swagger(object):
                     'nickname': 'get%sById' % resource.model.__name__,
                     'summary': 'Find %s by its unique ID' %
                                resource.model.__name__,
-                    'parameters': [
-                        {
-                            'paramType': 'path',
-                            'name': 'id',
-                            'description': 'ID of %s '
-                                           'that to be fetch' % resource
-                                           .model.__name__,
-                            'dataType': 'int',
-                            'required': True,
-                            'allowMultiple': False,
-                        }
-                    ],
+                    'parameters': parameters,
                 }
             ]
         }
 
-        apis.append(get_item_api)
+        return get_item_api
+
+    def get_item_parameters(self, resource):
+        return [{
+            'paramType': 'path',
+            'name': 'id',
+            'description': 'ID of %s to be fetched' % resource.model.__name__,
+            'dataType': 'int',
+            'required': True,
+            'allowMultiple': False,
+        }]
