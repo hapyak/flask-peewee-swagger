@@ -15,7 +15,6 @@ class Post(Model):
     blog = peewee.ForeignKeyField(Blog, related_name='posts')
     title = peewee.CharField()
 
-
 api = RestAPI(app)
 
 class BlogResource(RestResource):
