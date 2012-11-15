@@ -143,7 +143,7 @@ class Swagger(object):
 
         for field_name in sorted(resource.model._meta.fields.keys()):
             field = resource.model._meta.fields.get(field_name)
-            parameter = self.get_model_field_parameter(field)
+            parameter = self.get_model_field_parameter(resource, field)
             if parameter:
                 params.append(parameter)
 
@@ -169,7 +169,7 @@ class Swagger(object):
 
         return params
 
-    def get_model_field_parameter(self, field):
+    def get_model_field_parameter(self, resource, field):
         data_type = 'int'
         if isinstance(field, peewee.CharField):
             data_type = 'string'
