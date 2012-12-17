@@ -19,10 +19,10 @@ setup(
             'requirements.txt'
         ],
         'flask_peewee_swagger': [
-            'static/swagger-ui-1.1.0/css/*.css',
-            'static/swagger-ui-1.1.0/images/*.png',
-            'static/swagger-ui-1.1.0/lib/*.js',
-            'static/swagger-ui-1.1.0/*.js',
+            'static/swagger-ui-1.1.7/css/*.css',
+            'static/swagger-ui-1.1.7/images/*.png',
+            'static/swagger-ui-1.1.7/lib/*.js',
+            'static/swagger-ui-1.1.7/*.js',
             'templates/*.jinja2'
         ],
     },
