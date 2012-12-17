@@ -7,7 +7,7 @@ if sys.version_info[:2] < (2, 6):
 
 setup(
     name='flask-peewee-swagger',
-    version='1.0.0',
+    version='1.0.1',
     url='http://github.com/hapyak/flask-peewee-swagger/',
     license='BSD',
     author='Jason Horman',
