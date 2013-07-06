@@ -6,7 +6,7 @@ for flask-peewee rest apis.
 from __future__ import absolute_import
 
 import logging, peewee
-import os, json
+import os
 from flask import jsonify, Blueprint, render_template
 from flask.globals import request
 from flask.ext.peewee_swagger import first
