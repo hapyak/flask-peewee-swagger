@@ -105,15 +105,81 @@ class Swagger(object):
             'swaggerVersion': '1.1',
             'basePath': '%s%s' % (self.base_uri(), self.api.url_prefix),
             'resourcePath': '/meta/%s' % resource.get_api_name(),
-            'apis': self.get_model_apis(resource)
+            'apis': self.get_model_apis(resource),
+            'models': self.get_model(resource)
         }
-
         response = jsonify(data)
         response.headers.add('Cache-Control', 'max-age=0')
         return response
 
     def get_model_apis(self, resource):
-        return [self.get_listing_api(resource), self.get_item_api(resource)]
+        return (
+            self.get_listing_api(resource), 
+            self.get_item_api(resource), 
+            self.get_create_api(resource), 
+            self.get_update_api(resource),
+            self.get_delete_api(resource)
+        )
+
+    def get_create_api(self, resource):
+        """ Generates the meta descriptor for the resource listing api. """
+
+        create_api = {
+            'path': '/%s/' % resource.get_api_name(),
+            'description': 'Operations on %s' % resource.model.__name__,
+            'operations': [
+                {
+                    'httpMethod': 'POST',
+                    'nickname': 'create%ss' % resource.model
+                    .__name__,
+                    'summary': 'Create %ss' % resource.model.__name__,
+                    'parameters': [{
+                        'description': '%s object' % (resource.model.__name__),
+                        'paramType': 'body',
+                        'required': True,
+                        'allowMultiple': False,
+                        'dataType': resource.model.__name__
+                    }]
+                }
+            ]
+        }
+
+        return create_api
+
+    def get_update_api(self, resource):
+        """ Generates the meta descriptor for the resource listing api. """
+
+        update_api = {
+            'path': '/%s/{id}/' % resource.get_api_name(),
+            'description': 'Operations on %s' % resource.model.__name__,
+            'operations': [
+                {
+                    'httpMethod': 'PUT',
+                    'nickname': 'update%ss' % resource.model
+                    .__name__,
+                    'summary': 'Update %ss' % resource.model.__name__,
+                    'parameters': [
+                        {
+                            'paramType': 'path', 
+                            'name': 'id',
+                            'description': '%s id' % (resource.model.__name__),
+                            'dataType': 'int',
+                            'required': True,
+                            'allowMultiple': False,
+                        },
+                        {
+                            'description': '%s object' % (resource.model.__name__),
+                            'paramType': 'body',
+                            'required': True,
+                            'allowMultiple': False,
+                            'dataType': resource.model.__name__
+                        }
+                    ]
+                }
+            ]
+        }
+
+        return update_api
 
     def get_listing_api(self, resource):
         """ Generates the meta descriptor for the resource listing api. """
@@ -126,7 +192,7 @@ class Swagger(object):
             'operations': [
                 {
                     'httpMethod': 'GET',
-                    'nickname': 'getAll%ss' % resource.model
+                    'nickname': 'list%ss' % resource.model
                     .__name__,
                     'summary': 'Find %ss' % resource.model.__name__,
                     'parameters': get_all_params,
@@ -167,6 +233,36 @@ class Swagger(object):
 
         return params
 
+    def get_model(self, resource):
+        properties = {}
+        for field_name in sorted(resource.model._meta.fields.keys()):
+            field = resource.model._meta.fields.get(field_name)
+            model_property = self.get_model_property(resource, field)
+            if model_property:
+                properties[field_name] = model_property
+
+        return {
+            resource.model.__name__:{
+                'id':resource.model.__name__,
+                'properties':properties
+            }
+        }
+
+    def get_model_property(self, resource, field):
+        data_type = 'int'
+        if isinstance(field, peewee.CharField):
+            data_type = 'string'
+        elif isinstance(field, peewee.DateTimeField):
+            data_type = 'Date'
+        elif isinstance(field, peewee.FloatField):
+            data_type = 'float'
+        elif isinstance(field, peewee.BooleanField):
+            data_type = 'boolean'
+        property = {
+            'type':data_type,
+        }
+        return property
+
     def get_model_field_parameter(self, resource, field):
         data_type = 'int'
         if isinstance(field, peewee.CharField):
@@ -196,8 +292,8 @@ class Swagger(object):
             'operations': [
                 {
                     'httpMethod': 'GET',
-                    'nickname': 'get%sById' % resource.model.__name__,
-                    'summary': 'Find %s by its unique ID' %
+                    'nickname': 'get%s' % resource.model.__name__,
+                    'summary': 'Get %s by its unique ID' %
                                resource.model.__name__,
                     'parameters': parameters,
                 }
@@ -215,3 +311,39 @@ class Swagger(object):
             'required': True,
             'allowMultiple': False,
         }]
+
+    def get_delete_api(self, resource):
+        """ Generates the meta descriptor for the resource item api. """
+
+        parameters = self.delete_item_parameters(resource)
+
+        get_item_api = {
+            'path': '/%s/{id}/' % resource.get_api_name(),
+            'description': 'Operations on %s' % resource.model.__name__,
+            "responseClass": "void",
+            'operations': [
+                {
+                    'httpMethod': 'DELETE',
+                    'nickname': 'delete%s' % resource.model.__name__,
+                    'summary': 'Delete %s by its unique ID' %
+                               resource.model.__name__,
+                    'parameters': parameters,
+                }
+            ]
+        }
+
+        return get_item_api
+
+    def delete_item_parameters(self, resource):
+        return [{
+            'paramType': 'path',
+            'name': 'id',
+            'description': 'ID of %s to be fetched' % resource.model.__name__,
+            'dataType': 'int',
+            'required': True,
+            'allowMultiple': False,
+        }]
+
+        return delete_item_api
+
+
