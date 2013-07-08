@@ -7,14 +7,14 @@ if sys.version_info[:2] < (2, 6):
 
 setup(
     name='flask-peewee-swagger',
-    version='1.0.1',
+    version='1.0.2',
     url='http://github.com/hapyak/flask-peewee-swagger/',
     license='BSD',
     author='Jason Horman',
     author_email='jhorman@hapyak.com',
     description='Swagger Documentation for flask-peewee apis',
     packages=find_packages(),
-    package_data = {
+    package_data={
         'example': [
             'requirements.txt'
         ],
