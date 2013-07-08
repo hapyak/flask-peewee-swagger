@@ -25,8 +25,8 @@ class SwaggerUI(object):
         self.url_prefix = prefix
 
         self.blueprint = Blueprint('SwaggerUI', __name__,
-            static_folder=os.path.join(current_dir, 'static'),
-            template_folder=os.path.join(current_dir, 'templates'))
+                                   static_folder=os.path.join(current_dir, 'static'),
+                                   template_folder=os.path.join(current_dir, 'templates'))
 
     def setup(self):
         self.blueprint.add_url_rule('/', 'index', self.index)
@@ -34,9 +34,8 @@ class SwaggerUI(object):
 
     def index(self):
         return render_template('swagger.jinja2',
-            static_dir='%s/static' % self.url_prefix,
-            title=self.title,
-        )
+                               static_dir='%s/static' % self.url_prefix,
+                               title=self.title)
 
 
 class Swagger(object):
@@ -56,10 +55,8 @@ class Swagger(object):
             url_prefix='%s/meta' % self.api.url_prefix)
 
     def configure_routes(self):
-        self.blueprint.add_url_rule('/resources',
-            'model_resources', self.model_resources)
-        self.blueprint.add_url_rule('/resources/<resource_name>',
-            'model_resource', self.model_resource)
+        self.blueprint.add_url_rule('/resources', 'model_resources', self.model_resources)
+        self.blueprint.add_url_rule('/resources/<resource_name>', 'model_resource', self.model_resource)
 
     def base_uri(self):
         base_uri = request.host_url

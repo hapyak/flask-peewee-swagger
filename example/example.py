@@ -11,22 +11,28 @@ from flask_peewee_swagger.swagger import Swagger, SwaggerUI
 
 app = Flask(__name__)
 
+
 class Blog(peewee.Model):
     title = peewee.CharField()
     created = peewee.DateTimeField()
     modified = peewee.DateTimeField()
 
+
 class Post(peewee.Model):
     blog = peewee.ForeignKeyField(Blog, related_name='posts')
     title = peewee.CharField()
 
+
 api = RestAPI(app)
+
 
 class BlogResource(RestResource):
     pass
 
+
 class PostResource(RestResource):
     pass
+
 
 api.register(Blog, BlogResource)
 api.register(Post, PostResource)
