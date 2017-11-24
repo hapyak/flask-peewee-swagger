@@ -9,7 +9,7 @@ import logging, peewee
 import os
 from flask import jsonify, Blueprint, render_template
 from flask.globals import request
-from flask.ext.peewee_swagger import first
+from flask_peewee_swagger import first
 
 logger = logging.getLogger('flask_peewee_swagger')
 current_dir = os.path.dirname(__file__)
