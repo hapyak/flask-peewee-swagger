@@ -8,11 +8,24 @@ from __future__ import absolute_import
 import logging, peewee
 import os
 from flask import jsonify, Blueprint, render_template
-from flask.globals import request
+from flask import request, make_response
 from flask.ext.peewee_swagger import first
+from functools import wraps
 
 logger = logging.getLogger('flask_peewee_swagger')
 current_dir = os.path.dirname(__file__)
+
+DEFAULT_SWAGGER_VERSION = "1.1"
+
+
+
+def _max_age_0(f):
+    """This decorator adds the headers to force revalidation of the response"""
+    def decorated_function(*args, **kwargs):
+        resp = make_response(f(*args, **kwargs))
+        resp.headers.add('Cache-Control', 'max-age=0')
+        return resp
+    return decorated_function
 
 class SwaggerUI(object):
     """ Adds a flask blueprint for the swagger ajax UI. """
@@ -41,18 +54,27 @@ class SwaggerUI(object):
 class Swagger(object):
     """ Adds a flask blueprint for the swagger meta json resources. """
 
-    def __init__(self, api, name='Swagger'):
+    def __init__(self,
+                 api,
+                 name='Swagger',
+                 version="0.1",
+                 swagger_version=None,
+                 title=None):
         super(Swagger, self).__init__()
 
         self.app = api.app
         self.api = api
+        self.swagger_version = swagger_version or self.app.config.get(
+            "SWAGGER_VERSION", DEFAULT_SWAGGER_VERSION)
+        self.version = version
+        self.title = title or api.blueprint.name
 
         self.blueprint = Blueprint(name, __name__)
 
     def setup(self):
         self.configure_routes()
-        self.app.register_blueprint(self.blueprint,
-            url_prefix='%s/meta' % self.api.url_prefix)
+        self.app.register_blueprint(
+            self.blueprint, url_prefix='%s/meta' % self.api.url_prefix)
 
     def configure_routes(self):
         self.blueprint.add_url_rule('/resources', 'model_resources', self.model_resources)
@@ -64,20 +86,47 @@ class Swagger(object):
             base_uri = base_uri[0:-1]
         return base_uri
 
+    def get_api_metadata(self):
+        """Get common API meta data."""
+        if self.swagger_version >= "2.0":
+            return {
+                "info": {
+                    "version": self.version,
+                    "title": self.title,
+                },
+                'swaggerVersion': self.swagger_version,
+                "host": request.host,
+                'basePath': self.api.url_prefix,
+                "schemes": [
+                    request.scheme,
+                ],
+            }
+
+        return {
+            'apiVersion': self.version,
+            'swaggerVersion': self.swagger_version,
+            'basePath': '%s%s' % (self.base_uri(), self.api.url_prefix),
+        }
+
+    @_max_age_0
     def model_resources(self):
         """ Listing of all supported resources. """
-
-        response = jsonify({
-            'apiVersion': '0.1',
-            'swaggerVersion': '1.1',
-            'basePath': '%s%s' % (self.base_uri(), self.api.url_prefix),
-            'apis': self.get_model_resources()
-        })
-
-        response.headers.add('Cache-Control', 'max-age=0')
-        return response
+        meta = self.get_api_metadata()
+        meta["paths" if self.version >= "2.0" else "apis"] = self.get_model_resources()
+        return jsonify(meta)
 
     def get_model_resources(self):
+        """Get model resource references."""
+
+        if self.swagger_version >= "2.0":
+            return [
+                {
+                    "$ref": self.api._registry.get(t).get_api_name()
+                }
+                for t in sorted(
+                    self.api._registry.keys(), key=lambda t: t.__name__)
+            ]
+
         resources = []
 
         for type in sorted(self.api._registry.keys(),
@@ -90,36 +139,40 @@ class Swagger(object):
 
         return resources
 
+    @_max_age_0
     def model_resource(self, resource_name):
-        """ Details of a specific model resource. """
+        """Details of a specific model resource."""
 
         resource = first(
             [resource for resource in self.api._registry.values()
              if resource.get_api_name() == resource_name])
+        meta = self.get_api_metadata()
 
-        data = {
-            'apiVersion': '0.1',
-            'swaggerVersion': '1.1',
-            'basePath': '%s%s' % (self.base_uri(), self.api.url_prefix),
-            'resourcePath': '/meta/%s' % resource.get_api_name(),
-            'apis': self.get_model_apis(resource),
-            'models': self.get_model(resource)
-        }
-        response = jsonify(data)
-        response.headers.add('Cache-Control', 'max-age=0')
-        return response
+        if self.swagger_version >= "2.0":
+            meta.update({
+                "paths": self.get_model_apis(resource),
+                "definitions": self.get_model(resource),
+            })
+        else:
+            meta.update({
+                "apis": self.get_model_apis(resource),
+                "resourcePath": '/meta/%s' % resource.get_api_name(),
+                "models": self.get_model(resource),
+            })
+
+        return jsonify(meta)
 
     def get_model_apis(self, resource):
         return (
-            self.get_listing_api(resource), 
-            self.get_item_api(resource), 
-            self.get_create_api(resource), 
+            self.get_listing_api(resource),
+            self.get_item_api(resource),
+            self.get_create_api(resource),
             self.get_update_api(resource),
             self.get_delete_api(resource)
         )
 
     def get_create_api(self, resource):
-        """ Generates the meta descriptor for the resource listing api. """
+        """Generates the meta descriptor for the resource listing api."""
 
         create_api = {
             'path': '/%s/' % resource.get_api_name(),
@@ -157,7 +210,7 @@ class Swagger(object):
                     'summary': 'Update %ss' % resource.model.__name__,
                     'parameters': [
                         {
-                            'paramType': 'path', 
+                            'paramType': 'path',
                             'name': 'id',
                             'description': '%s id' % (resource.model.__name__),
                             'dataType': 'int',
@@ -232,18 +285,75 @@ class Swagger(object):
 
     def get_model(self, resource):
         properties = {}
+
+        if self.swagger_version >= "2.0":
+            meta = resource.model._meta
+            for field_name in sorted(meta.fields.keys()):
+                field = meta.fields.get(field_name)
+                model_property = self.get_model_property_v20(resource, field)
+                if model_property:
+                    properties[field_name] = model_property
+            return {
+                resource.model.__name__: {
+                    "type": "object",
+                    "properties": properties,
+                }
+            }
+
         for field_name in sorted(resource.model._meta.fields.keys()):
             field = resource.model._meta.fields.get(field_name)
             model_property = self.get_model_property(resource, field)
             if model_property:
                 properties[field_name] = model_property
-
         return {
-            resource.model.__name__:{
-                'id':resource.model.__name__,
-                'properties':properties
+            resource.model.__name__: {
+                'id': resource.model.__name__,
+                'properties': properties
             }
         }
+
+    def get_model_property_v20(self, resource, field):
+        """Map model field to object property."""
+        data_type = "integer"
+        data_format = None
+        if isinstance(field, (peewee.CharField, peewee.FixedCharField, peewee.TextField, )):
+            data_type = "string"
+        elif isinstance(field, peewee.BlobField):
+            data_type = "string"
+            data_format ="binary"
+        elif isinstance(field, peewee.DateTimeField):
+            data_type = "string"
+            data_format ="date-time"
+        elif isinstance(field, peewee.DateField):
+            data_type = "string"
+            data_format ="date"
+        elif isinstance(field, peewee.FloatField):
+            data_type = "number"
+            data_format = "float"
+        elif isinstance(field, peewee.DoubleField):
+            data_type = "number"
+            data_format = "double"
+        elif isinstance(field, peewee.DecimalField):
+            data_type = "number"
+            data_format = "decimal"
+        elif isinstance(field, peewee.BooleanField):
+            data_type = "boolean"
+        elif isinstance(field, peewee.BigIntegerField):
+            data_type = "integer"
+            data_format = "int64"
+        elif isinstance(field, peewee.IntegerField):
+            data_type = "integer"
+            data_format = "int32"
+        elif isinstance(field, peewee.UUIDField):
+            data_type = "string"
+            data_format = "uuid"
+
+        property = {
+            "type": data_type,
+        }
+        if data_format:
+            property["format"] = data_format
+        return property
 
     def get_model_property(self, resource, field):
         data_type = 'int'
@@ -342,5 +452,3 @@ class Swagger(object):
         }]
 
         return delete_item_api
-
-

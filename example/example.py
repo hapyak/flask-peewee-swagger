@@ -23,8 +23,6 @@ class Post(peewee.Model):
     title = peewee.CharField()
 
 
-api = RestAPI(app)
-
 
 class BlogResource(RestResource):
     pass
@@ -34,10 +32,15 @@ class PostResource(RestResource):
     pass
 
 
+api = RestAPI(app)
 api.register(Blog, BlogResource)
 api.register(Post, PostResource)
-
 api.setup()
+
+api2 = RestAPI(app, prefix="/api2", name="api2")
+api2.register(Blog, BlogResource)
+api2.register(Post, PostResource)
+api2.setup()
 
 ######################################
 # create the swagger api end point
@@ -45,6 +48,9 @@ api.setup()
 
 swagger = Swagger(api)
 swagger.setup()
+
+swagger2 = Swagger(api2, version="1.1", swagger_version="2.0", name="spec2")
+swagger2.setup()
 
 swaggerUI = SwaggerUI(app)
 swaggerUI.setup()
