@@ -4,24 +4,48 @@ from flask import Flask
 import peewee
 from flask_peewee.rest import RestAPI, RestResource
 from flask_peewee_swagger.swagger import Swagger, SwaggerUI
+from faker import Faker
+from datetime import datetime
 
 ######################################
 # standard flask peewee setup
 ######################################
 
 app = Flask(__name__)
+db = peewee.SqliteDatabase("database.db")
 
 
 class Blog(peewee.Model):
     title = peewee.CharField()
-    created = peewee.DateTimeField()
-    modified = peewee.DateTimeField()
+    created = peewee.DateTimeField(default=datetime.now)
+    modified = peewee.DateTimeField(null=True)
+
+    class Meta:
+        database = db
 
 
 class Post(peewee.Model):
-    blog = peewee.ForeignKeyField(Blog, related_name='posts')
+    blog = peewee.ForeignKeyField(Blog, related_name="posts")
     title = peewee.CharField()
 
+    class Meta:
+        database = db
+
+
+@app.cli.command("initdb")
+def initdb():
+    """Create a test DB and add some test data."""
+    Post.drop_table(fail_silently=True)
+    Blog.drop_table(fail_silently=True)
+    Blog.create_table()
+    Post.create_table()
+    faker = Faker()
+    for i in range(1, 10):
+        b = Blog.create(title = "Blog #%d" % i)
+        Post.insert_many([{
+            "blog": b,
+            "title": faker.text(max_nb_chars=80),
+        } for _ in range(100)]).execute()
 
 
 class BlogResource(RestResource):
