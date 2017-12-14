@@ -116,12 +116,24 @@ class Swagger(object):
     def model_resources(self):
         """Listing of all supported resources."""
         meta = self.get_api_metadata()
-        meta["paths" if self.version >= "2.0" else "apis"] = self.get_model_resources()
+        if self.swagger_version >= "2.0":
+            # meta["paths"] = self.get_model_resources()
+            meta["tags"] = [{
+                "name": t.__name__,
+                "description": "Managed objects of type %s" % t.__name__,
+            } for t in sorted(
+                    self.api._registry.keys(), key=lambda t: t.__name__)
+            ]
+            meta.update({"paths": dict(), "definitions": dict()})
+            for r in self.api._registry.values():
+                meta["paths"].update(self.get_model_apis_v2(r))
+                meta["definitions"].update(self.get_model(r))
+        else:
+            meta["apis"] = self.get_model_resources()
         return jsonify(meta)
 
     def get_model_resources(self):
         """Get model resource references."""
-
         if self.swagger_version >= "2.0":
             return [
                 {
@@ -176,8 +188,11 @@ class Swagger(object):
         )
 
     def get_model_apis_v2(self, resource):
-        collection_path = "/" + resource.get_api_name() + "/"
-        item_path = collection_path + "{id}/"
+        collection_path = '/' + resource.get_api_name() + '/'
+        item_path = collection_path + "{id}"
+        if self.app.url_map.strict_slashes:
+            item_path += '/'
+
         apis = {
                 collection_path: {},
                 item_path: {},
@@ -413,7 +428,7 @@ class Swagger(object):
         parameters = self.get_item_parameters(resource)
 
         get_item_api = {
-            'path': '/%s/{id}' % resource.get_api_name(),
+            'path': '/%s/{id}/' % resource.get_api_name(),
             'description': 'Operations on %s' % resource.model.__name__,
             'operations': [
                 {
@@ -473,6 +488,7 @@ class Swagger(object):
     def get_listing_api_v2(self, resource):
         """Generates the meta descriptor for the resource listing api."""
         return {
+            "tags": [resource.model.__name__, ],
             "description": "Operations on %s" % resource.model.__name__,
             "summary": "Find %ss" % resource.model.__name__,
             "operationId": "list%ss" % resource.model.__name__,
@@ -558,6 +574,7 @@ class Swagger(object):
     def get_item_api_v2(self, resource):
         """Generates the meta descriptor for the resource item api."""
         return {
+            "tags": [resource.model.__name__, ],
             "operationId": "get%s" % resource.model.__name__,
             "summary": "Get %s by its unique ID" % resource.model.__name__,
             "description": "Operations on %s" % resource.model.__name__,
@@ -586,6 +603,7 @@ class Swagger(object):
     def get_create_api_v2(self, resource):
         """Generates the meta descriptor for the resource listing api."""
         return {
+            "tags": [resource.model.__name__, ],
             "operationId": "create%ss" % resource.model.__name__,
             "summary": "Create %ss" % resource.model.__name__,
             "description": "Operations on %s" % resource.model.__name__,
@@ -611,6 +629,7 @@ class Swagger(object):
     def get_update_api_v2(self, resource):
         """Generates the meta descriptor for the resource listing api."""
         return {
+            "tags": [resource.model.__name__, ],
             "operationId": "update%ss" % resource.model.__name__,
             "summary": "Update %ss" % resource.model.__name__,
             "description": "Operations on %s" % resource.model.__name__,
@@ -649,6 +668,7 @@ class Swagger(object):
     def get_delete_api_v2(self, resource):
         """Generates the meta descriptor for the resource item api."""
         return {
+            "tags": [resource.model.__name__, ],
             "operationId": "delete%s" % resource.model.__name__,
             "summary": "Delete %s by its unique ID" % resource.model.__name__,
             "description": "Delete %s by its unique ID" % resource.model.__name__,

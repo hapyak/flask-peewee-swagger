@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from flask import Flask
 import peewee
+from flask_peewee.utils import slugify
 from flask_peewee.rest import RestAPI, RestResource
 from flask_peewee_swagger.swagger import Swagger, SwaggerUI
 from faker import Faker
@@ -12,6 +13,7 @@ from datetime import datetime
 ######################################
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 db = peewee.SqliteDatabase("example.db")
 
 
@@ -52,7 +54,15 @@ def initdb():
         } for _ in range(100)]).execute()
 
 
-class BlogResource(RestResource):
+class AppRestResource(RestResource):
+    """Application REST Resource."""
+
+    def get_api_name(self):
+        """Pluralize the name based on the model."""
+        return slugify(self.model.__name__ + 's')
+
+
+class BlogResource(AppRestResource):
     pass
 
 
