@@ -9,7 +9,7 @@ import logging, peewee
 import os
 from flask import jsonify, Blueprint, render_template
 from flask import request, make_response
-from flask.ext.peewee_swagger import first
+from . import first
 from functools import wraps
 
 logger = logging.getLogger('flask_peewee_swagger')
