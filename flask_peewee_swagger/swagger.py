@@ -58,7 +58,8 @@ class Swagger(object):
                  name='Swagger',
                  version="0.1",
                  swagger_version=None,
-                 title=None):
+                 title=None,
+                 prefix="meta"):
         super(Swagger, self).__init__()
 
         self.app = api.app
@@ -67,13 +68,15 @@ class Swagger(object):
             "SWAGGER_VERSION", DEFAULT_SWAGGER_VERSION)
         self.version = version
         self.title = title or api.blueprint.name
+        self.prefix = prefix
 
         self.blueprint = Blueprint(name, __name__)
 
-    def setup(self):
+    def setup(self, prefix=None):
+        self.prefix = prefix or self.prefix or "meta"
         self.configure_routes()
         self.app.register_blueprint(
-            self.blueprint, url_prefix='%s/meta' % self.api.url_prefix)
+            self.blueprint, url_prefix='%s/%s' % (self.api.url_prefix, self.prefix))
 
     def configure_routes(self):
         self.blueprint.add_url_rule('/resources', 'model_resources', self.model_resources)
@@ -89,16 +92,18 @@ class Swagger(object):
         """Get common API meta data."""
         if self.swagger_version >= "2.0":
             return {
+                "swagger": self.swagger_version,
                 "info": {
                     "version": self.version,
                     "title": self.title,
                 },
-                'swaggerVersion': self.swagger_version,
                 "host": request.host,
                 'basePath': self.api.url_prefix,
                 "schemes": [
                     request.scheme,
                 ],
+                "consumes": ["application/json", ],
+                "produces": ["application/json", ],
             }
 
         return {
@@ -197,8 +202,7 @@ class Swagger(object):
             'operations': [
                 {
                     'httpMethod': 'POST',
-                    'nickname': 'create%ss' % resource.model
-                    .__name__,
+                    'nickname': 'create%ss' % resource.model.__name__,
                     'summary': 'Create %ss' % resource.model.__name__,
                     'parameters': [{
                         'description': '%s object' % (resource.model.__name__),
@@ -476,9 +480,40 @@ class Swagger(object):
             "parameters": self.get_listing_parameters_v2(resource),
             "responses": {
                 "200": {
-                    "description": "Deleted successfully"
+                    "description": "%s object" % resource.model.__name__,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "meta": {
+                                "type": "object",
+                                "properties": {
+                                    "page": {
+                                        "format": "int32",
+                                        "type": "integer"
+                                    },
+                                    "next": {
+                                        "format": "uri",
+                                        "type": "string"
+                                    },
+                                    "previous": {
+                                        "format": "uri",
+                                        "type": "string"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    }
+                                },
+                            },
+                            "objects": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/%s" % resource.model.__name__,
+                                }
+                            }
+                        },
+                    }
                 }
-            },
+            }
         }
 
     def get_model_field_parameter_v2(self, resource, field):
@@ -504,7 +539,7 @@ class Swagger(object):
             "name": "limit",
             "description": "The number of items to return (defaults to %s)" % resource.paginate_by,
             "in": "query",
-            "type": "int",
+            "type": "integer",
             "format": "int32",
             "required": False,
         })
@@ -513,7 +548,7 @@ class Swagger(object):
             "name": "page",
             "description": "The page number of the results to return. Used with limit.",
             "in": "query",
-            "type": "int",
+            "type": "integer",
             "format": "int32",
             "required": False,
         })
@@ -537,7 +572,13 @@ class Swagger(object):
             }],
             "responses": {
                 "200": {
-                    "description": ""
+                    "description": "%s object" % resource.model.__name__,
+                    "schema": {
+                        "$ref": "#/definitions/%s" % resource.model.__name__,
+                    }
+                },
+                "404": {
+                    "description": "Not Found"
                 }
             },
         }
@@ -551,15 +592,18 @@ class Swagger(object):
             "parameters": [{
                 "name": "body",
                 "in": "body",
-                "description": "%s object" % (resource.model.__name__),
+                "description": "%s object" % resource.model.__name__,
                 "required": True,
                 "schema": {
                     "$ref": "#/definitions/%s" % resource.model.__name__,
                 }
             }],
             "responses": {
-                "200": {
-                    "description": ""
+                "201": {
+                    "description": "%s created" % resource.model.__name__,
+                    "schema": {
+                        "$ref": "#/definitions/%s" % resource.model.__name__,
+                    }
                 }
             },
         }
@@ -567,9 +611,9 @@ class Swagger(object):
     def get_update_api_v2(self, resource):
         """Generates the meta descriptor for the resource listing api."""
         return {
-            "description": "Operations on %s" % resource.model.__name__,
-            "nickname": "update%ss" % resource.model.__name__,
+            "operationId": "update%ss" % resource.model.__name__,
             "summary": "Update %ss" % resource.model.__name__,
+            "description": "Operations on %s" % resource.model.__name__,
             "parameters": [
                 {
                     "name": "id",
@@ -578,7 +622,6 @@ class Swagger(object):
                     "type": "integer",
                     "format": "int32",
                     "required": True,
-                    "allowMultiple": False,
                 },
                 {
                     "name": "body",
@@ -592,7 +635,13 @@ class Swagger(object):
             ],
             "responses": {
                 "200": {
-                    "description": ""
+                    "description": "%s object updated" % resource.model.__name__,
+                    "schema": {
+                        "$ref": "#/definitions/%s" % resource.model.__name__,
+                    }
+                },
+                "404": {
+                    "description": "Not Found"
                 }
             },
         }
@@ -615,7 +664,19 @@ class Swagger(object):
             }],
             "responses": {
                 "200": {
-                    "description": "Deleted successfully"
+                    "description": "Deleted successfully",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "deleted": {
+                                "format": "int32",
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "404": {
+                    "description": "Not Found"
                 }
             },
         }

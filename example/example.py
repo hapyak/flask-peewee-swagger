@@ -12,8 +12,12 @@ from datetime import datetime
 ######################################
 
 app = Flask(__name__)
-db = peewee.SqliteDatabase("database.db")
+db = peewee.SqliteDatabase("example.db")
 
+
+class Authentication(object):
+    def authorize(self):
+        return True
 
 class Blog(peewee.Model):
     title = peewee.CharField()
@@ -57,14 +61,9 @@ class PostResource(RestResource):
 
 
 api = RestAPI(app)
-api.register(Blog, BlogResource)
-api.register(Post, PostResource)
+api.register(Blog, BlogResource, Authentication())
+api.register(Post, PostResource, Authentication())
 api.setup()
-
-api2 = RestAPI(app, prefix="/api2", name="api2")
-api2.register(Blog, BlogResource)
-api2.register(Post, PostResource)
-api2.setup()
 
 ######################################
 # create the swagger api end point
@@ -73,12 +72,11 @@ api2.setup()
 swagger = Swagger(api)
 swagger.setup()
 
-swagger2 = Swagger(api2, version="1.1", swagger_version="2.0", name="spec2")
-swagger2.setup()
+swagger2 = Swagger(api, version="1.1", swagger_version="2.0", name="spec2")
+swagger2.setup(prefix="spec2")
 
 swaggerUI = SwaggerUI(app)
 swaggerUI.setup()
 
 if __name__ == '__main__':
     app.run()
-
