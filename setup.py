@@ -10,7 +10,7 @@ if sys.version_info[:2] < (2, 6):
 
 setup(
     name='flask-peewee-swagger',
-    version='1.1.0',
+    version='1.1.1',
     url='http://github.com/hapyak/flask-peewee-swagger/',
     license='BSD',
     author='Jason Horman',
@@ -22,10 +22,10 @@ setup(
             'requirements.txt'
         ],
         'flask_peewee_swagger': [
-            'static/swagger-ui-1.1.15/css/*.css',
-            'static/swagger-ui-1.1.15/images/*.png',
-            'static/swagger-ui-1.1.15/lib/*.js',
-            'static/swagger-ui-1.1.15/*.js',
+            'static/swagger-ui-*/css/*.css',
+            'static/swagger-ui-*/images/*.png',
+            'static/swagger-ui-*/lib/*.js',
+            'static/swagger-ui-*/*.js',
             'templates/*.jinja2'
         ],
     },
