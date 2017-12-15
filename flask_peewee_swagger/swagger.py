@@ -61,11 +61,13 @@ class Swagger(object):
                  version="0.1",
                  swagger_version=None,
                  title=None,
-                 prefix="meta"):
+                 prefix="meta",
+                 extras=None):
         super(Swagger, self).__init__()
 
         self.app = api.app
         self.api = api
+        self.extras = extras
         self.swagger_version = swagger_version or self.app.config.get(
             "SWAGGER_VERSION", DEFAULT_SWAGGER_VERSION)
         self.version = version
@@ -118,6 +120,8 @@ class Swagger(object):
     def model_resources(self):
         """Listing of all supported resources."""
         meta = self.get_api_metadata()
+        if self.extras:
+            meta.update(self.extras)
         if self.swagger_version >= "2.0":
             # meta["paths"] = self.get_model_resources()
             meta["tags"] = [{
