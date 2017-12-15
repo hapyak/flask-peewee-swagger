@@ -79,7 +79,7 @@
         if (url && url.length > 1) {
           url = decodeURIComponent(url[1]);
         } else {
-          url = "/api/meta/resources";
+          url = "{{ url or '/api/meta/resources' }}";
         }
 
         hljs.configure({

@@ -29,12 +29,13 @@ def _max_age_0(f):
 class SwaggerUI(object):
     """Adds a flask blueprint for the swagger ajax UI."""
 
-    def __init__(self, app, title='api docs', prefix='/api-docs'):
+    def __init__(self, app, title='api docs', prefix='/api-docs', url=None):
         super(SwaggerUI, self).__init__()
 
         self.app = app
         self.title = title
         self.url_prefix = prefix
+        self.url = url
 
         self.blueprint = Blueprint('SwaggerUI', __name__,
                                    static_folder=os.path.join(current_dir, 'static'),
@@ -46,6 +47,7 @@ class SwaggerUI(object):
 
     def index(self):
         return render_template('swagger.jinja2',
+                               url=self.url,
                                static_dir='%s/static' % self.url_prefix,
                                title=self.title)
 
