@@ -57,7 +57,7 @@ class SwaggerUI(object):
         return render_template(
             "swagger_%s.jinja2" % self.version
             if self.version else "swagger.jinja2",
-            url=self.url,
+            url=request.args.get("url", self.url),
             static_dir='%s/static' % self.url_prefix,
             title=self.title)
 
