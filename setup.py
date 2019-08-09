@@ -1,13 +1,16 @@
 import sys
 from setuptools import setup, find_packages
 
-requirements = ['Flask', 'werkzeug', 'jinja2', 'peewee>2.0.0', 'wtforms', 'wtf-peewee', 'flask-peewee']
+requirements = [
+    'Flask', 'werkzeug', 'jinja2', 'peewee>2.0.0', 'wtforms', 'wtf-peewee',
+    'flask-peewee'
+]
 if sys.version_info[:2] < (2, 6):
     requirements.append('simplejson')
 
 setup(
     name='flask-peewee-swagger',
-    version='1.0.2',
+    version='1.1.2',
     url='http://github.com/hapyak/flask-peewee-swagger/',
     license='BSD',
     author='Jason Horman',
@@ -19,10 +22,10 @@ setup(
             'requirements.txt'
         ],
         'flask_peewee_swagger': [
-            'static/swagger-ui-1.1.15/css/*.css',
-            'static/swagger-ui-1.1.15/images/*.png',
-            'static/swagger-ui-1.1.15/lib/*.js',
-            'static/swagger-ui-1.1.15/*.js',
+            'static/swagger-ui-*/css/*.css',
+            'static/swagger-ui-*/images/*.png',
+            'static/swagger-ui-*/lib/*.js',
+            'static/swagger-ui-*/*.js',
             'templates/*.jinja2'
         ],
     },
